@@ -47,7 +47,5 @@ func (s *Server) initializeRoutes() {
 	s.Router.HandleFunc("/v3ejlog-server/multiline-wincor-elastic", V3MultilineWincorElastic)
 	s.Router.HandleFunc("/v3ejlog-server/multiline-wincor-elastic2", V3MultilineWincorElastic2)
 	s.Router.HandleFunc("/v3ejlog-server/multiline-wincor-elastic2-write", V3MultilineWincorElastic2WriteOnly)
-	s.Router.HandleFunc("/v3ejlog-server/testingduludeh", Testingduludeh)
-	s.Router.HandleFunc("/v3ejlog-server/testingduludeh2", Testingduludeh2)
 
 }

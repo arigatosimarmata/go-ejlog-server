@@ -28,9 +28,7 @@ func DbConn2(dbname string) (db *sql.DB) {
 
 func DbConn(dbname string) (db *sql.DB, err error) {
 	dbDriver := "mysql"
-	// dbUser := "rooty"
 	dbUser := string(os.Getenv("DB_USER"))
-	// dbPass := "P@ssw0rd"
 	dbPass := string(os.Getenv("DB_PASSWORD"))
 	dbHost := string(os.Getenv("DB_HOST"))
 	dbPort := string(os.Getenv("DB_PORT"))

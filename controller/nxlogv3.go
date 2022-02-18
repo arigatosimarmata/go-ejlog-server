@@ -76,12 +76,9 @@ func V3MultilineWincor_1(w http.ResponseWriter, r *http.Request) {
 }
 
 func V3MultilineWincor(w http.ResponseWriter, r *http.Request) {
-	start := time.Now()
-	todayDate := start.Format("20060102")
 	ip_address, _, error := net.SplitHostPort(r.RemoteAddr)
-
 	if error != nil {
-		ErrorLogger.Printf("RC : %d - Error : %s", http.StatusNotAcceptable, error)
+		ErrorLogger.Printf("RC : %d - %s Error : %s", http.StatusNotAcceptable, ip_address, error)
 		w.WriteHeader(http.StatusNotAcceptable)
 		return
 	}
@@ -92,39 +89,97 @@ func V3MultilineWincor(w http.ResponseWriter, r *http.Request) {
 
 	_, found := Cac.Get(ip_address)
 	if !found {
-		ErrorLogger.Printf("RC : %d - Ip Not Found ", http.StatusNotFound)
+		ErrorLogger.Printf("RC : %d - Ip %s Not Found ", http.StatusNotFound, ip_address)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	tblname := strings.ReplaceAll(ip_address, ".", "_")
+	requestBody, _ := ioutil.ReadAll(r.Body)
+	ejol_map := strings.Split(string(requestBody), "\n")
+	namefile := ejol_map[0]
 
-	storePath := "appendrow/" + todayDate + "/" + tblname
-
-	if _, errPath := os.Stat(storePath); os.IsNotExist(errPath) {
-		err := os.MkdirAll(storePath, os.ModePerm)
+	if strings.EqualFold(namefile[0:15], strings.ToUpper("TRANSFER_OUTPUT")) {
+		err := AgentByCURL(ip_address, string(requestBody), ejol_map[0])
 		if err != nil {
-			ErrorLogger.Printf("RC : %d - Error : %s", http.StatusNotFound, err)
-			w.WriteHeader(http.StatusNotFound)
+			ErrorLogger.Printf("[RC : %d - %s] Error : %s", http.StatusOK, ip_address, err)
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(w, "Error %s", err)
+			return
+		}
+	} else {
+		err := AgentByNxLog(ip_address, string(requestBody))
+		if err != nil {
+			ErrorLogger.Printf("[RC : %d - %s] Error : %s", http.StatusOK, ip_address, err)
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(w, "Error %s", err)
 			return
 		}
 	}
 
-	rb, _ := ioutil.ReadAll(r.Body)
-	content := string(rb)
-	headerName := ip_address + "_" + strings.ReplaceAll(start.Format("150405.0000000"), ".", "")
-	filename := storePath + "/" + headerName
-	err := ioutil.WriteFile(filename, []byte(content), 0666)
+	w.WriteHeader(http.StatusOK)
+	InfoLogger.Printf("RC : %d - %s", http.StatusOK, ip_address)
+	fmt.Fprintf(w, "200")
+}
+
+func AgentByCURL(ip_address, requestBody, filename string) error {
+	start := time.Now()
+	todayDate := start.Format("20060102")
+
+	tblname := strings.ReplaceAll(ip_address, ".", "_")
+	// storePath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + todayDate + "/" + tblname
+	storePath := "appendrow/" + todayDate + "/" + tblname
+	fmt.Println(storePath)
+
+	if _, errPath := os.Stat(storePath); os.IsNotExist(errPath) {
+		err := os.MkdirAll(storePath, os.ModePerm)
+		if err != nil {
+			ErrorLogger.Printf("[RC : %d - %s] Error : %s", http.StatusOK, ip_address, err)
+			return err
+		}
+	}
+
+	content := string(requestBody)
+	filesave := storePath + "/" + filename
+	err := ioutil.WriteFile(filesave, []byte(content), 0666)
 	if err != nil {
-		ErrorLogger.Printf("RC : %d - Error : %s ", http.StatusNotAcceptable, err)
-		w.WriteHeader(http.StatusNotAcceptable)
-		return
+		ErrorLogger.Printf("[RC : %d - %s] Error : %s", http.StatusOK, ip_address, err)
+		return err
 	}
 
 	end := <-time.After(10 * time.Millisecond)
 	end.Sub(start)
-	InfoLogger.Printf("RC : %d - File stored successfully.", http.StatusOK)
-	w.WriteHeader(http.StatusOK)
+	return nil
+}
+
+func AgentByNxLog(ip_address, requestBody string) error {
+	start := time.Now()
+	todayDate := start.Format("20060102")
+
+	tblname := strings.ReplaceAll(ip_address, ".", "_")
+	// storePath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + todayDate + "/" + tblname
+	storePath := "appendrow/" + todayDate + "/" + tblname
+	fmt.Println(storePath)
+
+	if _, errPath := os.Stat(storePath); os.IsNotExist(errPath) {
+		err := os.MkdirAll(storePath, os.ModePerm)
+		if err != nil {
+			ErrorLogger.Printf("[RC : %d - %s] Error : %s", http.StatusOK, ip_address, err)
+			return err
+		}
+	}
+
+	content := string(requestBody)
+	headerName := ip_address + "_" + strings.ReplaceAll(start.Format("150405.0000000"), ".", "")
+	filename := storePath + "/" + headerName
+	err := ioutil.WriteFile(filename, []byte(content), 0666)
+	if err != nil {
+		ErrorLogger.Printf("[RC : %d - %s] Error : %s", http.StatusOK, ip_address, err)
+		return err
+	}
+
+	end := <-time.After(10 * time.Millisecond)
+	end.Sub(start)
+	return nil
 }
 
 func ConsumeFileEjol() error {
@@ -347,20 +402,4 @@ func processRequestEjlog2(ejcontent, ip_address, kanwil string) error {
 	defer db.Close()
 
 	return nil
-}
-
-func ConsumeFileEjol_withJob() error {
-	for {
-		readFile, err := ioutil.ReadDir("/home/lawencon/project/golang/go-ejlog-server/appendrow/20220204/127_0_0_1/D*")
-		if err != nil {
-			ErrorLogger.Printf("Error read file : %s", err)
-			return err
-		}
-
-		for _, f := range readFile {
-			fmt.Println(f.Name())
-		}
-
-		time.Sleep(1 * time.Minute)
-	}
 }

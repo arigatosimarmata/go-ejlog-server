@@ -1,4 +1,9 @@
 REENGINEERING EJLOG-SERVER WITH GO
+
+UPDATE FLOW LOGIC : 
+1. MENGHILANGKAN CREATE TABLE OTOMATIS JIKA TABLENYA TIDAK ADA/ TERSEDIA 
+
+SERVICE APPLICATION / URL :
 1. Update Service Multiline-wincor v1
 2. Update Service Multiline-wincor v2
 3. Update Service Multiline-wincor v3a with save data and file + job consume file to elastic
