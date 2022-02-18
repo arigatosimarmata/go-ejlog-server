@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 
@@ -17,6 +18,8 @@ import (
 var Cac *cache.Cache
 
 func V3MultilineWincor_1(w http.ResponseWriter, r *http.Request) {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
 	start := time.Now()
 
 	todayDate := start.Format("20060102")
@@ -42,7 +45,8 @@ func V3MultilineWincor_1(w http.ResponseWriter, r *http.Request) {
 	kanwil := getKanwil.(string)
 	tblname := strings.ReplaceAll(ip_address, ".", "_")
 
-	storePath := "appendrow/" + todayDate + "/" + tblname
+	// storePath := "appendrow/" + todayDate + "/" + tblname
+	storePath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + todayDate + "/" + tblname
 
 	if _, errPath := os.Stat(storePath); os.IsNotExist(errPath) {
 		err := os.MkdirAll(storePath, os.ModePerm)
@@ -126,9 +130,8 @@ func AgentByCURL(ip_address, requestBody, filename string) error {
 	todayDate := start.Format("20060102")
 
 	tblname := strings.ReplaceAll(ip_address, ".", "_")
-	// storePath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + todayDate + "/" + tblname
-	storePath := "appendrow/" + todayDate + "/" + tblname
-	fmt.Println(storePath)
+	storePath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + todayDate + "/" + tblname
+	// storePath := "appendrow/" + todayDate + "/" + tblname
 
 	if _, errPath := os.Stat(storePath); os.IsNotExist(errPath) {
 		err := os.MkdirAll(storePath, os.ModePerm)
@@ -156,9 +159,8 @@ func AgentByNxLog(ip_address, requestBody string) error {
 	todayDate := start.Format("20060102")
 
 	tblname := strings.ReplaceAll(ip_address, ".", "_")
-	// storePath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + todayDate + "/" + tblname
-	storePath := "appendrow/" + todayDate + "/" + tblname
-	fmt.Println(storePath)
+	storePath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + todayDate + "/" + tblname
+	// storePath := "appendrow/" + todayDate + "/" + tblname
 
 	if _, errPath := os.Stat(storePath); os.IsNotExist(errPath) {
 		err := os.MkdirAll(storePath, os.ModePerm)
