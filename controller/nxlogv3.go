@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -171,7 +172,9 @@ func AgentByNxLog(ip_address, requestBody string) error {
 	}
 
 	content := string(requestBody)
-	headerName := ip_address + "_" + strings.ReplaceAll(start.Format("150405.0000000"), ".", "")
+	// headerName := ip_address + "_" + strings.ReplaceAll(start.Format("150405.0000000"), ".", "")
+	unixtime := time.Now().UnixNano()
+	headerName := ip_address + "_" + strconv.Itoa(int(unixtime))
 	filename := storePath + "/" + headerName
 	err := ioutil.WriteFile(filename, []byte(content), 0666)
 	if err != nil {
