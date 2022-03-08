@@ -80,19 +80,83 @@ func V3MultilineWincor_1(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func V3MultilineWincor(w http.ResponseWriter, r *http.Request) {
-	ip_address, _, error := net.SplitHostPort(r.RemoteAddr)
-	if error != nil {
-		ErrorLogger.Printf("RC : %d - %s Error : %s", http.StatusNotAcceptable, ip_address, error)
-		w.WriteHeader(http.StatusNotAcceptable)
-		return
-	}
+func V3MultilineWincor_1AppendHeaderIp(w http.ResponseWriter, r *http.Request) {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
+	start := time.Now()
+
+	todayDate := start.Format("20060102")
+	ip_address := r.Header.Get("IP-ADDRESS")
 
 	if ip_address == "::1" {
 		ip_address = "127.0.0.1"
 	}
 
-	_, found := Cac.Get(ip_address)
+	fmt.Printf("Ip address %s \n", ip_address)
+
+	getKanwil, found := Cac.Get(ip_address)
+	if !found {
+		ErrorLogger.Printf("RC : %d - Ip : %s Not Found ", http.StatusNotFound, ip_address)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	kanwil := getKanwil.(string)
+	tblname := strings.ReplaceAll(ip_address, ".", "_")
+
+	// storePath := "appendrow/" + todayDate + "/" + tblname
+	storePath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + todayDate + "/" + tblname
+	rb, _ := ioutil.ReadAll(r.Body)
+	content := string(rb)
+	// headerName := ip_address + "_" + strings.ReplaceAll(start.Format("150405.0000000"), ".", "")
+	headerName := ip_address
+	filename := storePath + "/" + headerName
+
+	if _, errPath := os.Stat(storePath); os.IsNotExist(errPath) {
+		err := os.MkdirAll(storePath, os.ModePerm)
+		if err != nil {
+			ErrorLogger.Printf("Ip : %s Error : %s", ip_address, err)
+			return
+		}
+	}
+
+	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		ErrorLogger.Printf("Ip : %s Error : %s", ip_address, err)
+		return
+	}
+	defer file.Close()
+	if _, err := file.WriteString(content + "\n"); err != nil {
+		ErrorLogger.Fatal(err)
+		return
+	}
+
+	err = processRequestEjlog2(content, ip_address, kanwil)
+	if err != nil {
+		ErrorLogger.Printf("RC : %d - %s Error processRequestEjlog2 : %s", http.StatusNotAcceptable, ip_address, err)
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+	end := <-time.After(10 * time.Millisecond)
+	end.Sub(start)
+	InfoLogger.Printf("RC : %d - %s", http.StatusOK, ip_address)
+	w.WriteHeader(http.StatusOK)
+}
+
+func V3MultilineWincorAppendFile(w http.ResponseWriter, r *http.Request) {
+	// ip_address, _, error := net.SplitHostPort(r.RemoteAddr)
+	// if error != nil {
+	// 	ErrorLogger.Printf("RC : %d - %s Error : %s", http.StatusNotAcceptable, ip_address, error)
+	// 	w.WriteHeader(http.StatusNotAcceptable)
+	// 	return
+	// }
+	ip_address := r.Header.Get("IP-ADDRESS")
+
+	if ip_address == "::1" {
+		ip_address = "127.0.0.1"
+	}
+
+	kanwil, found := Cac.Get(ip_address)
 	if !found {
 		ErrorLogger.Printf("RC : %d - Ip %s Not Found ", http.StatusNotFound, ip_address)
 		w.WriteHeader(http.StatusNotFound)
@@ -103,8 +167,9 @@ func V3MultilineWincor(w http.ResponseWriter, r *http.Request) {
 	ejol_map := strings.Split(string(requestBody), "\n")
 	namefile := ejol_map[0]
 
-	if strings.EqualFold(namefile[0:15], strings.ToUpper("TRANSFER_OUTPUT")) {
-		err := AgentByCURL(ip_address, string(requestBody), ejol_map[0])
+	if strings.Contains(namefile, strings.ToUpper("TRANSFER_OUTPUT")) {
+		fmt.Println("inCURl")
+		err := AgentByCURL(ip_address, string(requestBody), ejol_map[0], kanwil.(string))
 		if err != nil {
 			ErrorLogger.Printf("[RC : %d - %s] Error : %s", http.StatusOK, ip_address, err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -112,7 +177,8 @@ func V3MultilineWincor(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		err := AgentByNxLog(ip_address, string(requestBody))
+		fmt.Println("inAgent")
+		err := AgentByNxLogAppendFile(ip_address, string(requestBody), kanwil.(string))
 		if err != nil {
 			ErrorLogger.Printf("[RC : %d - %s] Error : %s", http.StatusOK, ip_address, err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -126,7 +192,53 @@ func V3MultilineWincor(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "200")
 }
 
-func AgentByCURL(ip_address, requestBody, filename string) error {
+func V3MultilineWincorSplitFile(w http.ResponseWriter, r *http.Request) {
+	ip_address, _, error := net.SplitHostPort(r.RemoteAddr)
+	if error != nil {
+		ErrorLogger.Printf("RC : %d - %s Error : %s", http.StatusNotAcceptable, ip_address, error)
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+
+	if ip_address == "::1" {
+		ip_address = "127.0.0.1"
+	}
+
+	kanwil, found := Cac.Get(ip_address)
+	if !found {
+		ErrorLogger.Printf("RC : %d - Ip %s Not Found ", http.StatusNotFound, ip_address)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	requestBody, _ := ioutil.ReadAll(r.Body)
+	ejol_map := strings.Split(string(requestBody), "\n")
+	namefile := ejol_map[0]
+
+	if strings.EqualFold(namefile[0:15], strings.ToUpper("TRANSFER_OUTPUT")) {
+		err := AgentByCURL(ip_address, string(requestBody), ejol_map[0], kanwil.(string))
+		if err != nil {
+			ErrorLogger.Printf("[RC : %d - %s] Error : %s", http.StatusOK, ip_address, err)
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(w, "Error %s", err)
+			return
+		}
+	} else {
+		err := AgentByNxLog(ip_address, string(requestBody), kanwil.(string))
+		if err != nil {
+			ErrorLogger.Printf("[RC : %d - %s] Error : %s", http.StatusOK, ip_address, err)
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(w, "Error %s", err)
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	InfoLogger.Printf("RC : %d - %s", http.StatusOK, ip_address)
+	fmt.Fprintf(w, "200")
+}
+
+func AgentByCURL(ip_address, requestBody, filename, kanwil string) error {
 	start := time.Now()
 	todayDate := start.Format("20060102")
 
@@ -155,7 +267,7 @@ func AgentByCURL(ip_address, requestBody, filename string) error {
 	return nil
 }
 
-func AgentByNxLog(ip_address, requestBody string) error {
+func AgentByNxLog(ip_address, requestBody, kanwil string) error {
 	start := time.Now()
 	todayDate := start.Format("20060102")
 
@@ -174,7 +286,7 @@ func AgentByNxLog(ip_address, requestBody string) error {
 	content := string(requestBody)
 	// headerName := ip_address + "_" + strings.ReplaceAll(start.Format("150405.0000000"), ".", "")
 	unixtime := time.Now().UnixNano()
-	headerName := ip_address + "_" + strconv.Itoa(int(unixtime))
+	headerName := ip_address + "_" + kanwil + "_" + strconv.Itoa(int(unixtime))
 	filename := storePath + "/" + headerName
 	err := ioutil.WriteFile(filename, []byte(content), 0666)
 	if err != nil {
@@ -187,10 +299,46 @@ func AgentByNxLog(ip_address, requestBody string) error {
 	return nil
 }
 
+func AgentByNxLogAppendFile(ip_address, requestBody, kanwil string) error {
+	start := time.Now()
+	todayDate := start.Format("20060102")
+
+	tblname := strings.ReplaceAll(ip_address, ".", "_")
+	storePath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + todayDate + "/" + tblname
+	// storePath := "appendrow/" + todayDate + "/" + tblname
+
+	if _, errPath := os.Stat(storePath); os.IsNotExist(errPath) {
+		err := os.MkdirAll(storePath, os.ModePerm)
+		if err != nil {
+			ErrorLogger.Printf("Ip : %s Error : %s", ip_address, err)
+			return err
+		}
+	}
+
+	content := string(requestBody)
+	headerName := ip_address
+	filename := storePath + "/" + headerName
+
+	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		ErrorLogger.Printf("Ip : %s Error : %s", ip_address, err)
+		return err
+	}
+	defer file.Close()
+	if _, err := file.WriteString(content + "\n"); err != nil {
+		ErrorLogger.Fatal(err)
+		return err
+	}
+
+	end := <-time.After(10 * time.Millisecond)
+	end.Sub(start)
+	return nil
+}
+
 func ConsumeFileEjol() error {
 	date := time.Now().Format("20060102")
 	// dirPath := os.Getenv("EJOL_DIRECTORY") + "project/golang/go-ejlog-server/appendrow/" + date + "/127_0_0_1/"
-	dirPath := os.Getenv("EJOL_DIRECTORY") + "project/golang/go-ejlog-server/appendrow/" + date + "/"
+	dirPath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + date + "/"
 	sectionDirs, err := ioutil.ReadDir(dirPath)
 	if err != nil {
 		ErrorLogger.Printf("Error Get Dir : %s", err)

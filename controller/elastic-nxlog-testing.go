@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"regexp"
 	"strings"
@@ -15,21 +16,39 @@ import (
 )
 
 func V3MultilineWincorElastic(w http.ResponseWriter, r *http.Request) {
-	es, err := elasticsearch.NewDefaultClient()
+	date := time.Now()
+	ip_address, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		log.Fatal("Error creating the client")
+		ErrorLogger.Printf("RC : %d - Error %s", http.StatusNotAcceptable, err)
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
 	}
 
+	if ip_address == "::1" {
+		ip_address = "127.0.0.1"
+	}
+
+	getKanwil, found := Cac.Get(ip_address)
+	if !found {
+		ErrorLogger.Printf("RC : %d - Ip Not Found ", http.StatusNotFound)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	kanwil := getKanwil.(string)
+	es, err := elasticsearch.NewDefaultClient()
+	if err != nil {
+		ErrorLogger.Fatal("Error creating the client.")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	requestBody, _ := ioutil.ReadAll(r.Body)
 	ejol_map := strings.Split(string(requestBody), "\n")
-	ip_address := "127.0.0.1"
 	for i, ejlog := range ejol_map {
-		// log.Printf("Data ke %d --- Ejlog - %s", i+1, ejlog)
-
 		space2 := regexp.MustCompile(`\s+`)
 		cleanejlog := space2.ReplaceAllString(ejlog, " ")
 		req := esapi.IndexRequest{
-			Index: "ejlog_20_" + time.Now().Format("20060102"),
+			Index: "ejlog_" + kanwil + "_" + date.Format("20060102"),
 			// DocumentID: strconv.Itoa(i + 1),
 			Body: strings.NewReader(`
 			{"ejlog" : "` + cleanejlog + `",

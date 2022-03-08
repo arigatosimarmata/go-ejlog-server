@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"ejol/ejlog-server/controller"
+	"fmt"
 )
 
 type AtmMappingCache struct {
@@ -31,6 +32,32 @@ func (atmModel AtmMappingCacheModel) GetData() ([]AtmMappingCache, error) {
 				return nil, err2
 			} else {
 				controller.InfoLogger.Printf("Data %d - Ip Addr %s :  - Kanwil : %s", i, ipaddr, kanwil2)
+				atm := AtmMappingCache{ipaddr, kanwil2}
+				atms = append(atms, atm)
+			}
+		}
+		atmModel.DB.Close()
+		return atms, nil
+	}
+}
+
+func (atmModel AtmMappingCacheModel) GetDataKanwil() ([]AtmMappingCache, error) {
+	rows, err := atmModel.DB.Query("select ip_address, kanwil2 from atm_mappings where kanwil2=00")
+	var i = 0
+	if err != nil {
+		fmt.Printf("Error query : %s \n", err)
+		return nil, err
+	} else {
+		atms := []AtmMappingCache{}
+		for rows.Next() {
+			var ipaddr, kanwil2 string
+			i++
+			err2 := rows.Scan(&ipaddr, &kanwil2)
+			if err2 != nil {
+				fmt.Printf("Error looping data : %s \n", err2)
+				return nil, err2
+			} else {
+				fmt.Printf("Data %d - Ip Addr %s :  - Kanwil : %s \n", i, ipaddr, kanwil2)
 				atm := AtmMappingCache{ipaddr, kanwil2}
 				atms = append(atms, atm)
 			}

@@ -30,15 +30,14 @@ func V3MultilineWincorElastic2(w http.ResponseWriter, r *http.Request) {
 		ip_address = "127.0.0.1"
 	}
 
-	// getKanwil, found := Cac.Get(ip_address)
-	// if !found {
-	// 	ErrorLogger.Printf("RC : %d - Ip Not Found ", http.StatusNotFound)
-	// 	w.WriteHeader(http.StatusNotFound)
-	// 	return
-	// }
+	getKanwil, found := Cac.Get(ip_address)
+	if !found {
+		ErrorLogger.Printf("RC : %d - Ip Not Found ", http.StatusNotFound)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 
-	// kanwil := getKanwil.(string)
-	kanwil := "20"
+	kanwil := getKanwil.(string)
 	es, err := elasticsearch.NewDefaultClient()
 	if err != nil {
 		ErrorLogger.Fatal("Error creating the client.")

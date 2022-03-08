@@ -5,6 +5,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"ejol/ejlog-server/controller"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -17,6 +18,10 @@ var consumeEjlogCmd = &cobra.Command{
 	Long:  `Consume File Ejlog already saved in path.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("consume-ejlog called")
+		err := controller.ConsumeFileEjol()
+		if err != nil {
+			controller.ErrorLogger.Printf("Error : %s", err)
+		}
 	},
 }
 

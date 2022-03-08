@@ -3,42 +3,25 @@ package controller
 import (
 	"context"
 	"ejol/ejlog-server/config"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/joho/godotenv"
 )
 
 var (
 	WarningLogger *log.Logger
 	InfoLogger    *log.Logger
 	ErrorLogger   *log.Logger
+	KeywordEjol   *map[string]map[string]string
+	// KeywordEjol *TestKey
 )
 
-func init() {
-	fmt.Println("access here first")
-	err := godotenv.Load(".env")
-	if err != nil {
-		ErrorLogger.Fatal("Error load file env : ", err)
-	}
-	filename := os.Getenv("EJOL_DIRECTORY_LOG") + "ejlog-server-" + time.Now().Format("20060102") + ".log"
-	// filename := "ejlog-server-" + time.Now().Format("20060102") + ".log"
-	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	InfoLogger = log.New(file, "INFO", log.Ldate|log.Ltime|log.Lshortfile)
-	WarningLogger = log.New(file, "WARNING", log.Ldate|log.Ltime|log.Lshortfile)
-	ErrorLogger = log.New(file, "ERROR", log.Ldate|log.Ltime|log.Lshortfile)
-}
+type TestKey *map[string]map[string]string
 
 func MultilineWincor(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
@@ -170,7 +153,7 @@ func checkTable(tbl_name, kanwil string) error {
 
 	db, err := config.DbConn(dbname)
 	if err != nil {
-		ErrorLogger.Printf("Error connection to db : ", err)
+		ErrorLogger.Printf("Error connection to db : %s", err)
 		return err
 	}
 
@@ -204,7 +187,7 @@ func checkIpValid(ip_address string) (string, error) {
 	var tid, ip_atm, _type, kanwil2 string
 	db, err := config.DbConn("ejlog3")
 	if err != nil {
-		ErrorLogger.Printf("Error connection to db : ", err)
+		ErrorLogger.Printf("Error connection to db : %s", err)
 		return "", err
 	}
 	err2 := db.QueryRow("select tid, ip_address, type, kanwil2 from atm_mappings where ip_address = ? limit 1", ip_address).Scan(&tid, &ip_atm, &_type, &kanwil2)

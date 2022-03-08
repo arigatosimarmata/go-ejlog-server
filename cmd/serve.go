@@ -7,6 +7,7 @@ package cmd
 import (
 	"ejol/ejlog-server/controller"
 	"ejol/ejlog-server/job"
+	"ejol/ejlog-server/utils"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -25,6 +26,7 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			controller.ErrorLogger.Fatal("Error load file env : ", err)
 		}
+		utils.InitUtils()
 		go job.JobCacheAtmMappings()
 		time.Sleep(2 * time.Second)
 

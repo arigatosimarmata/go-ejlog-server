@@ -32,6 +32,7 @@ func (server *Server) Run(addr string) {
 func (s *Server) initializeRoutes() {
 	s.Router.HandleFunc("/", Index)
 	s.Router.HandleFunc("/homepage", Homepage)
+	s.Router.HandleFunc("/health-check", HealthCheckHandler)
 
 	s.Router.HandleFunc("/check-ip-cache", CheckIpCache)
 
@@ -42,8 +43,10 @@ func (s *Server) initializeRoutes() {
 	s.Router.HandleFunc("/v2ejlog-server/kafka-multiline-wincor", KafkaMultilineWincor)
 
 	//VERSI 3 SEPARATE FILE
-	s.Router.HandleFunc("/v3ejlog-server/multiline-wincor", V3MultilineWincor)
-	s.Router.HandleFunc("/v3ejlog-server/multiline-wincor-1", V3MultilineWincor_1)
+	// s.Router.HandleFunc("/v3ejlog-server/multiline-wincor", V3MultilineWincor)
+	s.Router.HandleFunc("/v3ejlog-server/multiline-wincor", V3MultilineWincorAppendFile)
+	// s.Router.HandleFunc("/v3ejlog-server/multiline-wincor-1", V3MultilineWincor_1)
+	s.Router.HandleFunc("/v3ejlog-server/multiline-wincor-1", V3MultilineWincor_1AppendHeaderIp)
 	s.Router.HandleFunc("/v3ejlog-server/multiline-wincor-elastic", V3MultilineWincorElastic)
 	s.Router.HandleFunc("/v3ejlog-server/multiline-wincor-elastic2", V3MultilineWincorElastic2)
 	s.Router.HandleFunc("/v3ejlog-server/multiline-wincor-elastic2-write", V3MultilineWincorElastic2WriteOnly)
