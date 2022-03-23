@@ -40,7 +40,7 @@ func (s *Server) initializeRoutes() {
 	s.Router.HandleFunc("/v1ejlog-server/multiline-wincor", MultilineWincor)
 
 	//VERSI 2 WITH KAFKA
-	s.Router.HandleFunc("/v2ejlog-server/kafka-multiline-wincor", KafkaMultilineWincor)
+	// s.Router.HandleFunc("/v2ejlog-server/kafka-multiline-wincor", KafkaMultilineWincor)
 
 	//VERSI 3 SEPARATE FILE
 	// s.Router.HandleFunc("/v3ejlog-server/multiline-wincor", V3MultilineWincor)
