@@ -102,10 +102,9 @@ func V3MultilineWincor_1AppendHeaderIp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	kanwil := getKanwil.(string)
-	tblname := strings.ReplaceAll(ip_address, ".", "_")
 
-	// storePath := "appendrow/" + todayDate + "/" + tblname
-	storePath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + todayDate + "/" + tblname
+	// storePath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + todayDate + "/" + tblname
+	storePath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + todayDate
 	rb, _ := ioutil.ReadAll(r.Body)
 	content := string(rb)
 	// headerName := ip_address + "_" + strings.ReplaceAll(start.Format("150405.0000000"), ".", "")
@@ -303,9 +302,8 @@ func AgentByNxLogAppendFile(ip_address, requestBody, kanwil string) error {
 	start := time.Now()
 	todayDate := start.Format("20060102")
 
-	tblname := strings.ReplaceAll(ip_address, ".", "_")
-	storePath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + todayDate + "/" + tblname
-	// storePath := "appendrow/" + todayDate + "/" + tblname
+	// storePath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + todayDate + "/" + tblname
+	storePath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + todayDate
 
 	if _, errPath := os.Stat(storePath); os.IsNotExist(errPath) {
 		err := os.MkdirAll(storePath, os.ModePerm)
