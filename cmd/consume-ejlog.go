@@ -6,7 +6,11 @@ package cmd
 
 import (
 	"ejol/ejlog-server/controller"
+	"ejol/ejlog-server/job"
+	"ejol/ejlog-server/utils"
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -18,16 +22,26 @@ var consumeEjlogCmd = &cobra.Command{
 	Long:  `Consume File Ejlog already saved in path.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("consume-ejlog called")
-		err := controller.ConsumeFileEjol()
+		utils.InitUtils()
+		go job.JobCacheAtmMappings()
+		time.Sleep(1 * time.Second)
+		// err := controller.ConsumeFileEjol()
+		err := controller.ConsumeFileEjolSchedule()
 		if err != nil {
-			controller.ErrorLogger.Printf("Error : %s", err)
+			// controller.ErrorLogger.Printf("Error : %s", err)
+			log.Printf("Error : %s", err)
 		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(consumeEjlogCmd)
+	// err := godotenv.Load(".env")
+	// if err != nil {
+	// 	log.Printf("Error load file env : %s", err)
+	// }
 
+	// fmt.Println("ENV Loaded.")
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command

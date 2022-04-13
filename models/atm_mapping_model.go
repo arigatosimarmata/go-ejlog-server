@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"ejol/ejlog-server/controller"
 	"fmt"
+	"os"
 )
 
 type AtmMappingCache struct {
@@ -12,6 +13,22 @@ type AtmMappingCache struct {
 }
 
 type AtmMappingCacheModel struct {
+	DB *sql.DB
+}
+
+type AtmMappingData struct {
+	Tid        string
+	Type       string
+	IpAddress  string
+	Kanwil2    string
+	Brand      *string
+	Branch2    string
+	Pengelola  string
+	Lokasi     string
+	KanwilName string
+}
+
+type AtmMappingModel struct {
 	DB *sql.DB
 }
 
@@ -42,7 +59,8 @@ func (atmModel AtmMappingCacheModel) GetData() ([]AtmMappingCache, error) {
 }
 
 func (atmModel AtmMappingCacheModel) GetDataKanwil() ([]AtmMappingCache, error) {
-	rows, err := atmModel.DB.Query("select ip_address, kanwil2 from atm_mappings where kanwil2=00")
+	// rows, err := atmModel.DB.Query("select ip_address, kanwil2 from atm_mappings where kanwil2=00")
+	rows, err := atmModel.DB.Query("select ip_address, kanwil2 from atm_mappings")
 	var i = 0
 	if err != nil {
 		fmt.Printf("Error query : %s \n", err)
@@ -59,6 +77,44 @@ func (atmModel AtmMappingCacheModel) GetDataKanwil() ([]AtmMappingCache, error) 
 			} else {
 				fmt.Printf("Data %d - Ip Addr %s :  - Kanwil : %s \n", i, ipaddr, kanwil2)
 				atm := AtmMappingCache{ipaddr, kanwil2}
+				atms = append(atms, atm)
+			}
+		}
+		atmModel.DB.Close()
+		return atms, nil
+	}
+}
+
+func (atmModel AtmMappingModel) GetDataKanwilCache() ([]AtmMappingData, error) {
+	var query string
+	kanwil := os.Getenv("KANWIL")
+	if kanwil != "" {
+		query = `where a.kanwil2 = ` + kanwil
+	} else {
+		query = ``
+	}
+
+	rows, err := atmModel.DB.Query(`
+	select a.tid, a.type, a.ip_address, a.kanwil2, a.brand, a.branch2, a.pengelola, a.name as lokasi, b.name as kanwil_name
+	from atm_mappings a
+	join atm_regions b on a.kanwil2 = b.id ` + query)
+
+	var i = 0
+	if err != nil {
+		fmt.Printf("Error query : %s \n", err)
+		return nil, err
+	} else {
+		atms := []AtmMappingData{}
+		for rows.Next() {
+			var tid, tipe, ipaddr, kanwil2, brand, branch2, pengelola, lokasi, kanwil_name string
+			i++
+			err2 := rows.Scan(&tid, &tipe, &ipaddr, &kanwil2, &brand, &branch2, &pengelola, &lokasi, &kanwil_name)
+			if err2 != nil {
+				fmt.Printf("Error looping data : %s \n", err2)
+				return nil, err2
+			} else {
+				fmt.Printf("Data %d - Ip Addr %s :  - Kanwil : %s - Brand : %s \n", i, ipaddr, kanwil2, brand)
+				atm := AtmMappingData{tid, tipe, ipaddr, kanwil2, &brand, branch2, pengelola, lokasi, kanwil_name}
 				atms = append(atms, atm)
 			}
 		}

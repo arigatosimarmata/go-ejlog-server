@@ -5,8 +5,14 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"ejol/ejlog-server/controller"
+	"ejol/ejlog-server/job"
 	"fmt"
+	"log"
+	"os"
+	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 )
 
@@ -14,14 +20,18 @@ import (
 var schedulerCmd = &cobra.Command{
 	Use:   "scheduler",
 	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Long:  `Scheduler filecache untuk consume ejlog`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("scheduler called")
+		err := godotenv.Load(".env")
+		if err != nil {
+			controller.ErrorLogger.Fatal("Error load file env : ", err)
+		}
+		err = os.MkdirAll("./cache/"+time.Now().Format("20060102"), os.ModePerm)
+		if err != nil {
+			log.Fatal(err)
+		}
+		job.TestingCache3()
+		fmt.Println("scheduler executed.")
 	},
 }
 

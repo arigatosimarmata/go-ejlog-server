@@ -2,9 +2,12 @@
 package controller
 
 import (
+	"bufio"
 	"ejol/ejlog-server/config"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -13,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/miguelmota/go-filecache"
 	"github.com/patrickmn/go-cache"
 )
 
@@ -108,7 +112,7 @@ func V3MultilineWincor_1AppendHeaderIp(w http.ResponseWriter, r *http.Request) {
 	rb, _ := ioutil.ReadAll(r.Body)
 	content := string(rb)
 	// headerName := ip_address + "_" + strings.ReplaceAll(start.Format("150405.0000000"), ".", "")
-	headerName := ip_address
+	headerName := "ej_" + strings.ReplaceAll(ip_address, ".", "_")
 	filename := storePath + "/" + headerName
 
 	if _, errPath := os.Stat(storePath); os.IsNotExist(errPath) {
@@ -314,7 +318,7 @@ func AgentByNxLogAppendFile(ip_address, requestBody, kanwil string) error {
 	}
 
 	content := string(requestBody)
-	headerName := ip_address
+	headerName := "ej_" + strings.ReplaceAll(ip_address, ".", "_")
 	filename := storePath + "/" + headerName
 
 	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -335,52 +339,101 @@ func AgentByNxLogAppendFile(ip_address, requestBody, kanwil string) error {
 
 func ConsumeFileEjol() error {
 	date := time.Now().Format("20060102")
-	// dirPath := os.Getenv("EJOL_DIRECTORY") + "project/golang/go-ejlog-server/appendrow/" + date + "/127_0_0_1/"
 	dirPath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + date + "/"
 	sectionDirs, err := ioutil.ReadDir(dirPath)
 	if err != nil {
-		ErrorLogger.Printf("Error Get Dir : %s", err)
+		log.Printf("Error Get Dir : %s", err)
 		return err
 	}
 
-	for _, folder := range sectionDirs {
-		fmt.Println(folder.Name())
-		readFile, err := ioutil.ReadDir(dirPath + folder.Name() + "/")
+	for _, files := range sectionDirs {
+		fmt.Println(files.Name())
+
+		ej_content, err := os.ReadFile(dirPath + files.Name())
 		if err != nil {
-			ErrorLogger.Printf("Error read Directory : %s", err)
+			ErrorLogger.Printf("Error read file : %s", err)
 			return err
 		}
 
-		for _, f := range readFile {
-			fmt.Println(f.Name())
-
-			filePath := dirPath + folder.Name() + "/"
-			ej_content, err := os.ReadFile(filePath + f.Name())
-			if err != nil {
-				ErrorLogger.Printf("Error read file : %s", err)
-				return err
-			}
-
-			filename := strings.Split(f.Name(), "_")
-			ip_address := filename[0]
-			kanwil := filename[1]
-
-			fmt.Printf("Split ip_address : %s - kanwil : %s ", ip_address, kanwil)
-			err = processRequestEjlog(string(ej_content), ip_address, kanwil)
-			if err != nil {
-				ErrorLogger.Printf("Error processRequestEjlog : %s", err)
-				return err
-			}
-			InfoLogger.Printf("Sukses menyimpan RequestEjlog dalam file %s", filePath+f.Name())
-
-			err = os.Rename(filePath+f.Name(), filePath+"D"+f.Name())
-			if err != nil {
-				ErrorLogger.Printf("Error pada merubah file : %s", err)
-				return err
-			}
-
-			InfoLogger.Printf("Sukses rename File %s", filePath+f.Name())
+		ip_address := strings.ReplaceAll(files.Name(), "_", ".")
+		ip_address = ip_address[3:]
+		// fmt.Println(ip_address)
+		getKanwil, found := Cac.Get(ip_address)
+		if !found {
+			log.Printf("RC : %d - Cache Ip : %s Not Found \n", http.StatusNotFound, ip_address)
+			continue
 		}
+		kanwil := getKanwil.(string)
+
+		err = processRequestEjlog(string(ej_content), ip_address, kanwil)
+		if err != nil {
+			ErrorLogger.Printf("Error processRequestEjlog : %s", err)
+			return err
+		}
+		InfoLogger.Printf("Sukses menyimpan RequestEjlog dalam file %s", dirPath+files.Name())
+
+	}
+
+	return nil
+}
+
+func ConsumeFileEjolSchedule() error {
+	date := time.Now().Format("20060102")
+	dirPath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + date + "/"
+	sectionDirs, err := ioutil.ReadDir(dirPath)
+	if err != nil {
+		log.Printf("Error Get Dir : %s", err)
+		return err
+	}
+	cache_directory := time.Now().Format("20060102") + "/"
+	var dst []byte
+	expire := 25 * time.Hour
+
+	for _, files := range sectionDirs {
+		fmt.Println(files.Name())
+
+		ip_address := strings.ReplaceAll(files.Name(), "_", ".")
+		ip_address = ip_address[3:]
+		// fmt.Println(ip_address)
+		getKanwil, found := Cac.Get(ip_address)
+		if !found {
+			log.Printf("RC : %d - Cache Ip : %s Not Found \n", http.StatusNotFound, ip_address)
+			continue
+		}
+		kanwil := getKanwil.(string)
+
+		_, err = filecache.Get(cache_directory, strings.ReplaceAll(ip_address, ".", "_"), &dst)
+		if err != nil {
+			fmt.Printf("IP Not Found in cache %s - Error : %s \n", ip_address, err)
+			return err
+		}
+		cachevalue, _ := strconv.Atoi(string(dst))
+
+		tblname := strings.ReplaceAll(ip_address, ".", "_")
+		fn := dirPath + "ej_" + tblname
+
+		line, lastl, err := ReadLineStreamUntilFinish(fn, cachevalue, 0)
+		if err != nil {
+			fmt.Printf("Error %s \n", err)
+			return err
+		}
+
+		fmt.Printf("HASIL DARI READLINESTREAM %d \n", len(line))
+		err = processRequestEjlogSchedule(line, ip_address, kanwil)
+		if err != nil {
+			ErrorLogger.Printf("Error processRequestEjlog : %s \n", err)
+			return err
+		}
+
+		lastlinestring := strconv.Itoa(lastl + 1)
+		data_lastline := []byte(lastlinestring)
+		err_cache := filecache.Set(cache_directory, strings.ReplaceAll(ip_address, ".", "_"), data_lastline, expire)
+		if err_cache != nil {
+			InfoLogger.Printf("Failed to set new value cache for IP %s - Error : %s \n", ip_address, err)
+			return err
+		}
+		fmt.Printf("Updated cache %s \n", lastlinestring)
+		InfoLogger.Printf("Data Saved Successfully %s \n", dirPath+files.Name())
 
 	}
 
@@ -553,4 +606,141 @@ func processRequestEjlog2(ejcontent, ip_address, kanwil string) error {
 	defer db.Close()
 
 	return nil
+}
+
+func processRequestEjlogSchedule(ejcontent []string, ip_address string, kanwil string) error {
+	tbl_name := "ej_" + strings.ReplaceAll(ip_address, ".", "_")
+	tbl_withdraw := "ejlog_withdraw"
+	tbl_print_cash := "ejlog_print_cash"
+	tbl_emergency_receipt := "ejlog_emergency_receipt"
+	tbl_addcash := "ejlog_add_cash"
+
+	dbname := "ejlog_" + kanwil + "_" + time.Now().Format("20060102") //make format dbname : ejlog_kanwil_yyyymmdd
+	// requestBody := ejcontent
+	// ejol_map := strings.Split(requestBody, "\n")
+	ejol_map := ejcontent
+	db, err := config.DbConn(dbname)
+	if err != nil {
+		return err
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(len(ejol_map))
+	//insert data
+	for i := 0; i < len(ejol_map); i++ {
+		element := ejol_map[i]
+		result, err := tx.Exec("INSERT INTO "+tbl_name+" (ip_address, ejlog) VALUES(?, ?)", ip_address, element)
+		if err != nil {
+			// tx.Rollback()
+			return err
+		}
+		tblej_id, _ := result.LastInsertId() //getLastIndex Executed
+
+		//WITHDRAW
+		if strings.Contains(element, "SWITCHING") {
+			_, err := tx.Exec("INSERT INTO `"+tbl_withdraw+"`(`index`, `dbname`, `ip_address`, `ejlog`, `is_read`) VALUES (?, ?, ?, ?, ?)", tblej_id, tbl_name, ip_address, element, 0)
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+
+		//PRINT CASH
+		if strings.Contains(element, "PRINTCASH") ||
+			strings.Contains(element, "IDR,IDR,IDR,IDR") ||
+			strings.Contains(element, "TYPE1TYPE2") ||
+			strings.Contains(element, "CASHTOTALTYPE1TYPE2") ||
+			strings.Contains(element, "[020t[05pTYPE1TYPE2") ||
+			strings.Contains(element, "#CURDENOCST+REJ=REM+DISP=TOTAL") ||
+			strings.Contains(element, "CURDENOINITDISPDEPCSTRJ") ||
+			strings.Contains(element, "CASHCOUNTINFO") {
+			_, err := tx.Exec("INSERT INTO `"+tbl_print_cash+"`(`index`, `dbname`, `ip_address`, `ejlog`, `is_read`) VALUES (?, ?, ?, ?, ?)", tblej_id, tbl_name, ip_address, element, 0)
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+
+		//EMERGENCY RECEIPT
+		if strings.Contains(element, "EMERGENCYRECEIPT") ||
+			strings.Contains(element, "TRANSACTIONJRNLTRANSACTION") ||
+			strings.Contains(element, "PLEASECONTACTBRANCH") {
+			_, err := tx.Exec("INSERT INTO `"+tbl_emergency_receipt+"`(`index`, `dbname`, `ip_address`, `ejlog`, `is_read`) VALUES (?, ?, ?, ?, ?)", tblej_id, tbl_name, ip_address, element, 0)
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+
+		//ADD CASH
+		if strings.Contains(element, "ADDCASH") ||
+			strings.Contains(element, "CASHCOUNTERS") ||
+			strings.Contains(element, "[05pCASHADDED") ||
+			strings.Contains(element, "CLEARCASH") ||
+			strings.Contains(element, "REPLENISHMENT") {
+			_, err := tx.Exec("INSERT INTO `"+tbl_addcash+"`(`index`, `dbname`, `ip_address`, `ejlog`, `is_read`) VALUES (?, ?, ?, ?, ?)", tblej_id, tbl_name, ip_address, element, 0)
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+		// break
+	}
+	tx.Commit()
+	defer db.Close()
+
+	return nil
+}
+
+func ReadLineStreamUntilFinish(fn string, lineNum int, lineLength int) (line []string, lastLine int, err error) {
+	// func ReadLineStreamUntilFinish(fn string, lineNum int, lineLength int) (line string, lastLine int, err error) {
+	// line_length := 30
+	// line_length := 0
+	// if lineLength > 0 {
+	// 	line_length = lineLength
+	// }
+	file, err := os.Open(fn)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer file.Close()
+
+	var txtlines []string
+	var line_found bool
+	line_found = false
+	sc := bufio.NewScanner(file)
+	for sc.Scan() {
+		lastLine++ //start dari 0
+
+		if lastLine == lineNum {
+			line_found = true
+		}
+
+		// if line_length == 0 {
+		// 	txtlines = append(txtlines, sc.Text())
+		// 	return txtlines, lastLine, sc.Err()
+		// }
+
+		// txtlines = append(txtlines, sc.Text())
+		if line_found {
+			txtlines = append(txtlines, sc.Text())
+			// line_length--
+		}
+
+	}
+
+	if lastLine < lineNum {
+		fmt.Printf("lastLine %d < lineNum %d return EOF \n", lastLine, lineNum)
+
+		return nil, lastLine, io.EOF
+	}
+	// fmt.Printf("Last line %d \n", lastLine)
+	// fmt.Printf("Content %s \n", strings.Join(txtlines, "\n"))
+
+	// return strings.Join(txtlines, "\n"), lastLine, nil
+	return txtlines, lastLine, nil
 }
