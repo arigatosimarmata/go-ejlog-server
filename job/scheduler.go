@@ -5,10 +5,13 @@ import (
 	"ejol/ejlog-server/controller"
 	"ejol/ejlog-server/models"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/miguelmota/go-filecache"
 	"github.com/patrickmn/go-cache"
 )
 
@@ -114,4 +117,36 @@ func JobCacheAtmMappings2() {
 		time.Sleep(10 * time.Minute)
 		controller.InfoLogger.Println("After 10 Minutes")
 	}
+}
+
+func TestingCache3() {
+	start := time.Now()
+	expire := 25 * time.Hour
+
+	db, err := config.DbConn("ejlog3")
+	if err != nil {
+		fmt.Printf("Error : %s \n", err)
+	}
+
+	atmMappingModel := models.AtmMappingModel{
+		DB: db,
+	}
+
+	cache_directory := time.Now().Format("20060102") + "/"
+	machines, err := atmMappingModel.GetDataKanwilCache()
+	if err != nil {
+		fmt.Printf("Error : %s \n", err)
+	}
+
+	for _, atm := range machines {
+		err := filecache.Set(cache_directory, strings.ReplaceAll(atm.IpAddress, ".", "_"), []byte("1"), expire)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("set cache for %s \n", atm.IpAddress)
+	}
+
+	fmt.Println("Job Finished.")
+	elapsed := time.Since(start)
+	fmt.Printf("This process took %s \n", elapsed)
 }
