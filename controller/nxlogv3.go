@@ -351,12 +351,18 @@ func DebugV3MultilineWincorAppendFile(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error Content Type empty, %v", r.Header.Get("Content-Type"))
 		return
 	}
-	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
-	requestBody, err := ioutil.ReadAll(r.Body)
+	// r.Body = http.MaxBytesReader(w, r.Body, 1048576)
+	// requestBody, err := ioutil.ReadAll(r.Body)
+	// if err != nil {
+	// 	w.Write([]byte(fmt.Sprintf("Could not read received POST payload: %v", err)))
+	// 	return
+	// }
+	bodies, err := io.Copy(os.Stdout, r.Body)
 	if err != nil {
-		w.Write([]byte(fmt.Sprintf("Could not read received POST payload: %v", err)))
+		log.Printf("Error Content Type empty, %v", err)
 		return
 	}
+	requestBody := bodies
 	ejol_map := strings.Split(string(requestBody), "\n")
 	namefile := ejol_map[0]
 
@@ -410,12 +416,18 @@ func V3MultilineWincorSplitFile(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error Content Type empty, %v", r.Header.Get("Content-Type"))
 		return
 	}
-	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
-	requestBody, err := ioutil.ReadAll(r.Body)
+	// r.Body = http.MaxBytesReader(w, r.Body, 1048576)
+	// requestBody, err := ioutil.ReadAll(r.Body)
+	// if err != nil {
+	// 	w.Write([]byte(fmt.Sprintf("Could not read received POST payload: %v", err)))
+	// 	return
+	// }
+	bodies, err := io.Copy(os.Stdout, r.Body)
 	if err != nil {
-		w.Write([]byte(fmt.Sprintf("Could not read received POST payload: %v", err)))
+		log.Printf("Error Content Type empty, %v", err)
 		return
 	}
+	requestBody := bodies
 	ejol_map := strings.Split(string(requestBody), "\n")
 	namefile := ejol_map[0]
 
