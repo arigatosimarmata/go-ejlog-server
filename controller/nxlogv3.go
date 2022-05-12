@@ -3,7 +3,6 @@ package controller
 
 import (
 	"bufio"
-	"bytes"
 	"ejol/ejlog-server/config"
 	"ejol/ejlog-server/models"
 	"fmt"
@@ -63,12 +62,16 @@ func V3MultilineWincor_1(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	rb, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Printf("Error reading body : %v \n", err)
+	if r.Header.Get("Content-Type") == "" {
+		log.Printf("Error Content Type empty, %v", r.Header.Get("Content-Type"))
 		return
 	}
-	r.Body = ioutil.NopCloser(bytes.NewBuffer(rb))
+	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
+	rb, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		w.Write([]byte(fmt.Sprintf("Could not read received POST payload: %v", err)))
+		return
+	}
 	content := string(rb)
 	headerName := ip_address + "_" + strings.ReplaceAll(start.Format("150405.0000000"), ".", "")
 	filename := storePath + "/" + headerName
@@ -113,12 +116,16 @@ func V3MultilineWincor_1AppendHeaderIp(w http.ResponseWriter, r *http.Request) {
 	kanwil := getKanwil.(string)
 
 	storePath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + todayDate
-	rb, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Printf("Error reading body : %v \n", err)
+	if r.Header.Get("Content-Type") == "" {
+		log.Printf("Error Content Type empty, %v", r.Header.Get("Content-Type"))
 		return
 	}
-	r.Body = ioutil.NopCloser(bytes.NewBuffer(rb))
+	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
+	rb, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		w.Write([]byte(fmt.Sprintf("Could not read received POST payload: %v", err)))
+		return
+	}
 	content := string(rb)
 	headerName := "ej_" + strings.ReplaceAll(ip_address, ".", "_")
 	filename := storePath + "/" + headerName
@@ -193,12 +200,16 @@ func DebugV3MultilineWincor_1AppendHeaderIp(w http.ResponseWriter, r *http.Reque
 	kanwil := getKanwil.(string)
 
 	storePath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + todayDate
-	rb, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Printf("Error reading body : %v \n", err)
+	if r.Header.Get("Content-Type") == "" {
+		log.Printf("Error Content Type empty, %v", r.Header.Get("Content-Type"))
 		return
 	}
-	r.Body = ioutil.NopCloser(bytes.NewBuffer(rb))
+	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
+	rb, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		w.Write([]byte(fmt.Sprintf("Could not read received POST payload: %v", err)))
+		return
+	}
 	content := string(rb)
 	headerName := "ej_" + strings.ReplaceAll(ip_address, ".", "_")
 	filename := storePath + "/" + headerName
@@ -250,12 +261,7 @@ func V3MultilineWincorAppendFile(w http.ResponseWriter, r *http.Request) {
 		ip_address = "127.0.0.1"
 	}
 
-	requestBody, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Printf("Error reading body : %v \n", err)
-		return
-	}
-	r.Body = ioutil.NopCloser(bytes.NewBuffer(requestBody))
+	requestBody, _ := ioutil.ReadAll(r.Body)
 	ejol_map := strings.Split(string(requestBody), "\n")
 	namefile := ejol_map[0]
 
@@ -341,12 +347,16 @@ func DebugV3MultilineWincorAppendFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	requestBody, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Printf("Error reading body : %v \n", err)
+	if r.Header.Get("Content-Type") == "" {
+		log.Printf("Error Content Type empty, %v", r.Header.Get("Content-Type"))
 		return
 	}
-	r.Body = ioutil.NopCloser(bytes.NewBuffer(requestBody))
+	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
+	requestBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		w.Write([]byte(fmt.Sprintf("Could not read received POST payload: %v", err)))
+		return
+	}
 	ejol_map := strings.Split(string(requestBody), "\n")
 	namefile := ejol_map[0]
 
@@ -396,12 +406,16 @@ func V3MultilineWincorSplitFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	requestBody, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Printf("Error reading body : %v \n", err)
+	if r.Header.Get("Content-Type") == "" {
+		log.Printf("Error Content Type empty, %v", r.Header.Get("Content-Type"))
 		return
 	}
-	r.Body = ioutil.NopCloser(bytes.NewBuffer(requestBody))
+	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
+	requestBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		w.Write([]byte(fmt.Sprintf("Could not read received POST payload: %v", err)))
+		return
+	}
 	ejol_map := strings.Split(string(requestBody), "\n")
 	namefile := ejol_map[0]
 
