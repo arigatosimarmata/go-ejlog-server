@@ -3,6 +3,7 @@ package controller
 
 import (
 	"bufio"
+	"bytes"
 	"ejol/ejlog-server/config"
 	"ejol/ejlog-server/models"
 	"fmt"
@@ -62,11 +63,16 @@ func V3MultilineWincor_1(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	rb, _ := ioutil.ReadAll(r.Body)
+	rb, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("Error reading body : %v \n", err)
+		return
+	}
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(rb))
 	content := string(rb)
 	headerName := ip_address + "_" + strings.ReplaceAll(start.Format("150405.0000000"), ".", "")
 	filename := storePath + "/" + headerName
-	err := ioutil.WriteFile(filename, []byte(content), 0666)
+	err = ioutil.WriteFile(filename, []byte(content), 0666)
 	if err != nil {
 		models.ErrorLogger.Printf("RC : %d - Error WriteFile : %s", http.StatusNotAcceptable, err)
 		w.WriteHeader(http.StatusNotAcceptable)
@@ -107,7 +113,12 @@ func V3MultilineWincor_1AppendHeaderIp(w http.ResponseWriter, r *http.Request) {
 	kanwil := getKanwil.(string)
 
 	storePath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + todayDate
-	rb, _ := ioutil.ReadAll(r.Body)
+	rb, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("Error reading body : %v \n", err)
+		return
+	}
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(rb))
 	content := string(rb)
 	headerName := "ej_" + strings.ReplaceAll(ip_address, ".", "_")
 	filename := storePath + "/" + headerName
@@ -182,7 +193,12 @@ func DebugV3MultilineWincor_1AppendHeaderIp(w http.ResponseWriter, r *http.Reque
 	kanwil := getKanwil.(string)
 
 	storePath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + todayDate
-	rb, _ := ioutil.ReadAll(r.Body)
+	rb, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("Error reading body : %v \n", err)
+		return
+	}
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(rb))
 	content := string(rb)
 	headerName := "ej_" + strings.ReplaceAll(ip_address, ".", "_")
 	filename := storePath + "/" + headerName
@@ -234,7 +250,12 @@ func V3MultilineWincorAppendFile(w http.ResponseWriter, r *http.Request) {
 		ip_address = "127.0.0.1"
 	}
 
-	requestBody, _ := ioutil.ReadAll(r.Body)
+	requestBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("Error reading body : %v \n", err)
+		return
+	}
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(requestBody))
 	ejol_map := strings.Split(string(requestBody), "\n")
 	namefile := ejol_map[0]
 
@@ -320,7 +341,12 @@ func DebugV3MultilineWincorAppendFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	requestBody, _ := ioutil.ReadAll(r.Body)
+	requestBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("Error reading body : %v \n", err)
+		return
+	}
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(requestBody))
 	ejol_map := strings.Split(string(requestBody), "\n")
 	namefile := ejol_map[0]
 
@@ -370,7 +396,12 @@ func V3MultilineWincorSplitFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	requestBody, _ := ioutil.ReadAll(r.Body)
+	requestBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("Error reading body : %v \n", err)
+		return
+	}
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(requestBody))
 	ejol_map := strings.Split(string(requestBody), "\n")
 	namefile := ejol_map[0]
 
