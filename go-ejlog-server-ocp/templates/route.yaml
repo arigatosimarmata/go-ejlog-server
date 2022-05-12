@@ -1,0 +1,22 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: {{ include "go-roumtatm-ocp.fullname" . }}
+  name: {{ include "go-roumtatm-ocp.fullname" . }}
+spec:
+  host: "{{ include "go-roumtatm-ocp.fullname" . }}{{ .Values.host }}"
+  port:
+    targetPort: {{ .Values.targetPort }}
+  to:
+    kind: Service
+    name: {{ .Values.name }}
+    weight: {{ .Values.service.weight }}
+  wildcardPolicy: None
+status:
+  ingress:
+    - conditions:
+      host: "{{ include "go-roumtatm-ocp.fullname" . }}{{ .Values.host }}"
+      routerName: router
+      wildcardPolicy: None
+      routerCanonicalHostname: {{ .Values.host }}

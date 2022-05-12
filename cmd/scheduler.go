@@ -5,8 +5,8 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"ejol/ejlog-server/controller"
 	"ejol/ejlog-server/job"
+	"ejol/ejlog-server/models"
 	"fmt"
 	"log"
 	"os"
@@ -24,7 +24,7 @@ var schedulerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		err := godotenv.Load(".env")
 		if err != nil {
-			controller.ErrorLogger.Fatal("Error load file env : ", err)
+			models.ErrorLogger.Fatal("Error load file env : ", err)
 		}
 		err = os.MkdirAll("./cache/"+time.Now().Format("20060102"), os.ModePerm)
 		if err != nil {

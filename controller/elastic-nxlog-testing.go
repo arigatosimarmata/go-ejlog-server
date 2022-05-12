@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"ejol/ejlog-server/models"
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -19,7 +20,7 @@ func V3MultilineWincorElastic(w http.ResponseWriter, r *http.Request) {
 	date := time.Now()
 	ip_address, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		ErrorLogger.Printf("RC : %d - Error %s", http.StatusNotAcceptable, err)
+		models.ErrorLogger.Printf("RC : %d - Error %s", http.StatusNotAcceptable, err)
 		w.WriteHeader(http.StatusNotAcceptable)
 		return
 	}
@@ -30,7 +31,7 @@ func V3MultilineWincorElastic(w http.ResponseWriter, r *http.Request) {
 
 	getKanwil, found := Cac.Get(ip_address)
 	if !found {
-		ErrorLogger.Printf("RC : %d - Ip Not Found ", http.StatusNotFound)
+		models.ErrorLogger.Printf("RC : %d - Ip Not Found ", http.StatusNotFound)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -38,7 +39,7 @@ func V3MultilineWincorElastic(w http.ResponseWriter, r *http.Request) {
 	kanwil := getKanwil.(string)
 	es, err := elasticsearch.NewDefaultClient()
 	if err != nil {
-		ErrorLogger.Fatal("Error creating the client.")
+		models.ErrorLogger.Fatal("Error creating the client.")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

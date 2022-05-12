@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"ejol/ejlog-server/controller"
+	"ejol/ejlog-server/models"
 
 	"github.com/spf13/cobra"
 )
@@ -18,7 +19,7 @@ var parseElasticCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		err := controller.HyosungParseProcess()
 		if err != nil {
-			controller.ErrorLogger.Printf("Error Application %s", err)
+			models.ErrorLogger.Printf("Error Application %s", err)
 		}
 		// controller.LoadConfigKeyword()
 		// fmt.Println("Welcome")

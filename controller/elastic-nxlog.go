@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"ejol/ejlog-server/models"
 	"encoding/json"
 	"io/ioutil"
 	"net"
@@ -21,7 +22,7 @@ func V3MultilineWincorElastic2(w http.ResponseWriter, r *http.Request) {
 	ejlog_arrays := []*EjModel{}
 	ip_address, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		ErrorLogger.Printf("RC : %d - Error %s", http.StatusNotAcceptable, err)
+		models.ErrorLogger.Printf("RC : %d - Error %s", http.StatusNotAcceptable, err)
 		w.WriteHeader(http.StatusNotAcceptable)
 		return
 	}
@@ -32,7 +33,7 @@ func V3MultilineWincorElastic2(w http.ResponseWriter, r *http.Request) {
 
 	getKanwil, found := Cac.Get(ip_address)
 	if !found {
-		ErrorLogger.Printf("RC : %d - Ip Not Found ", http.StatusNotFound)
+		models.ErrorLogger.Printf("RC : %d - Ip Not Found ", http.StatusNotFound)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -40,7 +41,7 @@ func V3MultilineWincorElastic2(w http.ResponseWriter, r *http.Request) {
 	kanwil := getKanwil.(string)
 	es, err := elasticsearch.NewDefaultClient()
 	if err != nil {
-		ErrorLogger.Fatal("Error creating the client.")
+		models.ErrorLogger.Fatal("Error creating the client.")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -70,14 +71,14 @@ func V3MultilineWincorElastic2(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		ErrorLogger.Printf("Error getting response : %s", err)
+		models.ErrorLogger.Printf("Error getting response : %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	defer res.Body.Close()
 
 	// fmt.Println(res, err)
-	InfoLogger.Println(res.Status(), err)
+	models.InfoLogger.Println(res.Status(), err)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -95,6 +96,6 @@ func V3MultilineWincorElastic2WriteOnly(w http.ResponseWriter, r *http.Request) 
 
 	ejmap_string := new(strings.Builder)
 	json.NewEncoder(ejmap_string).Encode(ejlog_arrays)
-	InfoLogger.Println(ejmap_string.String())
+	models.InfoLogger.Println(ejmap_string.String())
 	w.WriteHeader(http.StatusOK)
 }

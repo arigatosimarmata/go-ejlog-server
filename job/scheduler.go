@@ -20,7 +20,7 @@ func JobExportCountAtm() {
 		fmt.Println("Call Scheduler JobExportCountAtm")
 		db, err := config.DbConn("ejlog3")
 		if err != nil {
-			controller.ErrorLogger.Println("Error connect to DB : ", err)
+			models.ErrorLogger.Println("Error connect to DB : ", err)
 			return
 		}
 		defer db.Close()
@@ -31,13 +31,13 @@ func JobExportCountAtm() {
 
 		total_atm, err := atmMappingModel.CountAtmMapping()
 		if err != nil {
-			controller.ErrorLogger.Printf("Error model : %s", err)
+			models.ErrorLogger.Printf("Error model : %s", err)
 			return
 		}
 
 		os.Setenv("TOTAL_MESIN", strconv.Itoa(total_atm))
 		time.Sleep(24 * time.Hour)
-		controller.InfoLogger.Println("After 24 Hour")
+		models.InfoLogger.Println("After 24 Hour")
 	}
 }
 
@@ -52,7 +52,7 @@ func JobCacheAtmMappings() {
 
 		db, err := config.DbConn("ejlog3")
 		if err != nil {
-			controller.ErrorLogger.Println("Error connect to DB : ", err)
+			models.ErrorLogger.Println("Error connect to DB : ", err)
 			return
 		}
 		// defer db.Close()
@@ -63,7 +63,7 @@ func JobCacheAtmMappings() {
 
 		atms, err2 := atmMappingModel.GetData()
 		if err2 != nil {
-			controller.InfoLogger.Printf("Error get atms : %s", err2)
+			models.InfoLogger.Printf("Error get atms : %s", err2)
 		}
 		for _, atm := range atms {
 			controller.Cac.Set(atm.IpAddress, atm.Kanwil2, cache.NoExpiration)
@@ -72,7 +72,7 @@ func JobCacheAtmMappings() {
 		elapsed := time.Since(start)
 		fmt.Printf("%s tooks %s\n", "Method", elapsed)
 		time.Sleep(24 * time.Hour)
-		controller.InfoLogger.Println("After 10 Minutes")
+		models.InfoLogger.Println("After 10 Minutes")
 	}
 
 }
@@ -86,7 +86,7 @@ func JobCacheAtmMappings2() {
 
 		db, err := config.DbConn("ejlog3")
 		if err != nil {
-			controller.ErrorLogger.Println("Error connect to DB : ", err)
+			models.ErrorLogger.Println("Error connect to DB : ", err)
 			return
 		}
 		defer db.Close()
@@ -94,18 +94,18 @@ func JobCacheAtmMappings2() {
 		rows, err := db.Query("select ip_address, kanwil2 from atm_mappings limit ?,?", 0, 5000)
 		var i = 0
 		if err != nil {
-			controller.ErrorLogger.Println("Error query : ", err)
+			models.ErrorLogger.Println("Error query : ", err)
 		} else {
 			for rows.Next() {
 				var ipaddr, kanwil2 string
 				i++
 				err2 := rows.Scan(&ipaddr, &kanwil2)
 				if err2 != nil {
-					controller.ErrorLogger.Println("Error looping data : ", err2)
+					models.ErrorLogger.Println("Error looping data : ", err2)
 				}
 
 				c.Set(ipaddr, kanwil2, cache.NoExpiration)
-				controller.InfoLogger.Printf("Data %d - Ip Addr %s :  - Kanwil : %s", i, ipaddr, kanwil2)
+				models.InfoLogger.Printf("Data %d - Ip Addr %s :  - Kanwil : %s", i, ipaddr, kanwil2)
 
 			}
 
@@ -115,7 +115,7 @@ func JobCacheAtmMappings2() {
 		}
 
 		time.Sleep(10 * time.Minute)
-		controller.InfoLogger.Println("After 10 Minutes")
+		models.InfoLogger.Println("After 10 Minutes")
 	}
 }
 

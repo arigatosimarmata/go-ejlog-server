@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"ejol/ejlog-server/models"
 	"fmt"
 	"io"
 	"log"
@@ -12,7 +13,7 @@ import (
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {
-	InfoLogger.Println("Accessing Index Function")
+	models.InfoLogger.Println("Accessing Index Function")
 	fmt.Fprint(w, "Dashboard ejlog-server")
 	log.Printf("200")
 }
@@ -21,7 +22,7 @@ func Homepage(w http.ResponseWriter, r *http.Request) {
 	ip := r.Header.Get("X-REAL-IP")
 	ipa, port, err := net.SplitHostPort(r.RemoteAddr)
 
-	InfoLogger.Printf("IP REAL : %s OR %s OR %s OR %s", ip, ipa, port, err)
+	models.InfoLogger.Printf("IP REAL : %s OR %s OR %s OR %s", ip, ipa, port, err)
 	fmt.Printf("IP REAL : %s OR %s OR %s OR %s", ip, ipa, port, err)
 
 	ips := r.Header.Get("X-FORWARDED-FOR")
@@ -33,7 +34,7 @@ func CheckIpCache(w http.ResponseWriter, r *http.Request) {
 
 	ip, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		ErrorLogger.Printf("Error Get Ip %s ", ip)
+		models.ErrorLogger.Printf("Error Get Ip %s ", ip)
 	}
 
 	if ip == "::1" {
@@ -42,10 +43,10 @@ func CheckIpCache(w http.ResponseWriter, r *http.Request) {
 
 	kanwil, found := c.Get(ip)
 	if found {
-		InfoLogger.Printf("Kanwil for ip %s : %s", kanwil, ip)
+		models.InfoLogger.Printf("Kanwil for ip %s : %s", kanwil, ip)
 	}
 
-	InfoLogger.Printf("Not Found Kanwil for ip %s ", ip)
+	models.InfoLogger.Printf("Not Found Kanwil for ip %s ", ip)
 }
 
 func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {

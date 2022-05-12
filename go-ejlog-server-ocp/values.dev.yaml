@@ -1,0 +1,36 @@
+host: ".apps.ocp-dev.bri.co.id" 
+
+# Database Configuration
+DB_NAME: "ejlog3"
+DB_HOST : "172.18.135.152"
+DB_USER: "rooty"
+DB_PASSWORD: "P@ssw0rd"  
+DB_PORT: "3306" 
+DB_DRIVER: "mysql"
+
+#Server Address
+server_address: "0.0.0.0"
+server_port: "7710"
+
+# LOG FILE
+log_level: "info"
+log_out: "/var/log/go-roumtatm/roumt_atm.log"
+#LOG_OUTPUT=""
+max_size: "500"
+max_backup: "5"
+max_age: "90"
+
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 10
+  averageUtilization: 80
+  targetAverageUtilization: 80
+  
+resources:
+  requests:
+    cpu: 100m
+    memory: 100Mi
+  limits:
+    cpu: 150m
+    memory: 150Mi

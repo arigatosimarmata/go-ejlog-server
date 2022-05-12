@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"ejol/ejlog-server/models"
 	"encoding/json"
 	"os"
 )
@@ -9,7 +10,7 @@ func LoadConfigKeyword(filename string) (map[string]map[string]string, error) {
 	var v map[string]map[string]string
 	configFile, err := os.Open(filename)
 	if err != nil {
-		ErrorLogger.Println(err)
+		models.ErrorLogger.Println(err)
 		return nil, err
 	}
 	defer configFile.Close()
@@ -23,13 +24,13 @@ func LoadConfigKeyword_VERSIPOINTERWORK(filename string) (*map[string]map[string
 	var v map[string]map[string]string
 	configFile, err := os.Open(filename)
 	if err != nil {
-		ErrorLogger.Println(err)
+		models.ErrorLogger.Println(err)
 		return nil, err
 	}
 	defer configFile.Close()
 
 	jsonParser := json.NewDecoder(configFile)
 	jsonParser.Decode(&v)
-	// InfoLogger.Println(len(v["HITACHI_KEYWORD"]))
+	// models.InfoLogger.Println(len(v["HITACHI_KEYWORD"]))
 	return &v, nil
 }

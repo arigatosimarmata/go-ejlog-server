@@ -28,7 +28,7 @@ var consumeEjlogCmd = &cobra.Command{
 		// err := controller.ConsumeFileEjol()
 		err := controller.ConsumeFileEjolSchedule()
 		if err != nil {
-			// controller.ErrorLogger.Printf("Error : %s", err)
+			// models.ErrorLogger.Printf("Error : %s", err)
 			log.Printf("Error : %s", err)
 		}
 	},

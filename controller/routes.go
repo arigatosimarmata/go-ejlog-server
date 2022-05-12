@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"ejol/ejlog-server/models"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,7 +17,7 @@ func (server *Server) Run(addr string) {
 	server.initializeRoutes()
 
 	fmt.Println("Start the development server at http://127.0.0.1" + addr)
-	InfoLogger.Println("Start the development server at http://127.0.0.1" + addr)
+	models.InfoLogger.Println("Start the development server at http://127.0.0.1" + addr)
 
 	s := &http.Server{
 		Addr:           addr,
@@ -44,7 +45,7 @@ func (s *Server) initializeRoutes() {
 
 	//VERSI 3 SEPARATE FILE
 	// s.Router.HandleFunc("/v3ejlog-server/multiline-wincor", V3MultilineWincor)
-	s.Router.HandleFunc("/v3ejlog-server/multiline-wincor", V3MultilineWincorAppendFile)
+	s.Router.HandleFunc("/v3ejlog-server/multiline-wincor", V3MultilineWincorAppendFile) //save file only
 	// s.Router.HandleFunc("/v3ejlog-server/multiline-wincor-1", V3MultilineWincor_1)
 	s.Router.HandleFunc("/v3ejlog-server/multiline-wincor-1", V3MultilineWincor_1AppendHeaderIp)
 	s.Router.HandleFunc("/v3ejlog-server/multiline-wincor-elastic", V3MultilineWincorElastic)

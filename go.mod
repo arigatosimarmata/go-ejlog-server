@@ -18,6 +18,7 @@ require (
 	github.com/miguelmota/go-filecache v0.0.0-20190120045612-de73e75f3c6a // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
+	github.com/rs/zerolog v1.26.1 // indirect
 	github.com/spf13/afero v1.8.1 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/spf13/cobra v1.3.0 // indirect

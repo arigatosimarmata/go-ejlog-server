@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"ejol/ejlog-server/models"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -19,7 +20,7 @@ func OkiParseProcess() error {
 	dirPath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + date + "/"
 	sectionDirs, err := ioutil.ReadDir(dirPath)
 	if err != nil {
-		ErrorLogger.Printf("Error Get Dir : %s", err)
+		models.ErrorLogger.Printf("Error Get Dir : %s", err)
 		return err
 	}
 
@@ -27,7 +28,7 @@ func OkiParseProcess() error {
 		fmt.Println(folder.Name())
 		readFile, err := ioutil.ReadDir(dirPath + folder.Name() + "/")
 		if err != nil {
-			ErrorLogger.Printf("Error read Directory : %s", err)
+			models.ErrorLogger.Printf("Error read Directory : %s", err)
 			return err
 		}
 
@@ -37,7 +38,7 @@ func OkiParseProcess() error {
 			filePath := dirPath + folder.Name() + "/"
 			ej_content, err := os.ReadFile(filePath + f.Name())
 			if err != nil {
-				ErrorLogger.Printf("Error read file : %s", err)
+				models.ErrorLogger.Printf("Error read file : %s", err)
 				return err
 			}
 
@@ -48,18 +49,18 @@ func OkiParseProcess() error {
 			fmt.Printf("Split ip_address : %s - kanwil : %s ", ip_address, kanwil)
 			err = WincorProcessEjlogElastic(string(ej_content), ip_address, kanwil)
 			if err != nil {
-				ErrorLogger.Printf("Error processEjlogElastic : %s", err)
+				models.ErrorLogger.Printf("Error processEjlogElastic : %s", err)
 				return err
 			}
-			InfoLogger.Printf("Sukses menyimpan RequestEjlog dalam file %s", filePath+f.Name())
+			models.InfoLogger.Printf("Sukses menyimpan RequestEjlog dalam file %s", filePath+f.Name())
 
 			err = os.Rename(filePath+f.Name(), filePath+f.Name())
 			if err != nil {
-				ErrorLogger.Printf("Error pada merubah file : %s", err)
+				models.ErrorLogger.Printf("Error pada merubah file : %s", err)
 				return err
 			}
 
-			InfoLogger.Printf("Sukses rename File %s", filePath+f.Name())
+			models.InfoLogger.Printf("Sukses rename File %s", filePath+f.Name())
 		}
 
 	}
@@ -68,14 +69,14 @@ func OkiParseProcess() error {
 }
 
 func OkiProcessEjlogElastic(ejcontent, ip_address, kanwil string) error {
-	keywordMapOki := KeywordEjol
+	keywordMapOki := models.KeywordEjol
 	date := time.Now()
 	requestBody := ejcontent
 	ejol_map := strings.Split(string(requestBody), "\n")
 
 	es, err := elasticsearch.NewDefaultClient()
 	if err != nil {
-		ErrorLogger.Fatal("Error creating the client.")
+		models.ErrorLogger.Fatal("Error creating the client.")
 		return err
 	}
 

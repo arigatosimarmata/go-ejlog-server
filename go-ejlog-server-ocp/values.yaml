@@ -1,0 +1,66 @@
+name: "go-roumtatm-ocp"
+replicaCount: 1
+
+image:
+  repository: image-registry.openshift-image-registry.svc:5000/dcp/go-roumtatm-ocp
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart version.
+  tag: "latest"
+
+imagePullSecrets: []
+port: 7710
+targetPort: 7710-tcp
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+# type: ClusterIP
+  type: NodePort
+  port: 7710
+  nodeport: 31010
+  protocol : TCP
+
+#hpa:
+#  enabled: true
+#  minReplicas: 1
+#  maxReplicas: 10
+#  averageUtilization: 80
+#  targetAverageUtilization: 80
+
+ingress:
+  enabled: false
+  tls: false
+  servicePort: http
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

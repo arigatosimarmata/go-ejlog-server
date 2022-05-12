@@ -3,8 +3,8 @@ package controller
 import (
 	"context"
 	"ejol/ejlog-server/config"
+	"ejol/ejlog-server/models"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"strings"
@@ -13,21 +13,13 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-var (
-	WarningLogger *log.Logger
-	InfoLogger    *log.Logger
-	ErrorLogger   *log.Logger
-	KeywordEjol   *map[string]map[string]string
-	// KeywordEjol *TestKey
-)
-
 type TestKey *map[string]map[string]string
 
 func MultilineWincor(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	ip_address, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		ErrorLogger.Printf("RC : %d - Error %s", http.StatusNotAcceptable, err)
+		models.ErrorLogger.Printf("RC : %d - Error %s", http.StatusNotAcceptable, err)
 		w.WriteHeader(http.StatusNotAcceptable)
 		return
 	}
@@ -38,7 +30,7 @@ func MultilineWincor(w http.ResponseWriter, r *http.Request) {
 
 	getKanwil, found := Cac.Get(ip_address)
 	if !found {
-		ErrorLogger.Printf("RC : %d - Ip Not Found ", http.StatusNotFound)
+		models.ErrorLogger.Printf("RC : %d - Ip Not Found ", http.StatusNotFound)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -55,14 +47,14 @@ func MultilineWincor(w http.ResponseWriter, r *http.Request) {
 	ejol_map := strings.Split(string(requestBody), "\n")
 	db, err := config.DbConn(dbname)
 	if err != nil {
-		ErrorLogger.Printf("RC : %d - Error connect to DB : %s", http.StatusInternalServerError, err)
+		models.ErrorLogger.Printf("RC : %d - Error connect to DB : %s", http.StatusInternalServerError, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		ErrorLogger.Printf("RC : %d - Error begin transaction %s", http.StatusInternalServerError, err)
+		models.ErrorLogger.Printf("RC : %d - Error begin transaction %s", http.StatusInternalServerError, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -71,7 +63,7 @@ func MultilineWincor(w http.ResponseWriter, r *http.Request) {
 	for _, element := range ejol_map {
 		result, err := tx.Exec("INSERT INTO "+tbl_name+" (ip_address, ejlog) VALUES(?, ?)", ip_address, element)
 		if err != nil {
-			ErrorLogger.Printf("RC : %d - Error : %s", http.StatusInternalServerError, err)
+			models.ErrorLogger.Printf("RC : %d - Error : %s", http.StatusInternalServerError, err)
 			w.WriteHeader(http.StatusInternalServerError)
 			db.Close()
 			return
@@ -82,7 +74,7 @@ func MultilineWincor(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(element, "SWITCHING") {
 			_, err := tx.Exec("INSERT INTO `"+tbl_withdraw+"`(`index`, `dbname`, `ip_address`, `ejlog`, `is_read`) VALUES (?, ?, ?, ?, ?)", tblej_id, tbl_name, ip_address, element, 0)
 			if err != nil {
-				ErrorLogger.Printf("RC : %d - Error WD: %s", http.StatusInternalServerError, err)
+				models.ErrorLogger.Printf("RC : %d - Error WD: %s", http.StatusInternalServerError, err)
 				w.WriteHeader(http.StatusInternalServerError)
 				tx.Rollback()
 				db.Close()
@@ -95,13 +87,14 @@ func MultilineWincor(w http.ResponseWriter, r *http.Request) {
 			strings.Contains(element, "IDR,IDR,IDR,IDR") ||
 			strings.Contains(element, "TYPE1TYPE2") ||
 			strings.Contains(element, "CASHTOTALTYPE1TYPE2") ||
-			strings.Contains(element, "[020t[05pTYPE1TYPE2") ||
+			// strings.Contains(element, "[020t[05pTYPE1TYPE2") ||
+			strings.Contains(element, "[020t\u001B[05pTYPE1TYPE2") ||
 			strings.Contains(element, "#CURDENOCST+REJ=REM+DISP=TOTAL") ||
 			strings.Contains(element, "CURDENOINITDISPDEPCSTRJ") ||
 			strings.Contains(element, "CASHCOUNTINFO") {
 			_, err := tx.Exec("INSERT INTO `"+tbl_print_cash+"`(`index`, `dbname`, `ip_address`, `ejlog`, `is_read`) VALUES (?, ?, ?, ?, ?)", tblej_id, tbl_name, ip_address, element, 0)
 			if err != nil {
-				ErrorLogger.Printf("RC : %d - Error PrintCash: %s", http.StatusInternalServerError, err)
+				models.ErrorLogger.Printf("RC : %d - Error PrintCash: %s", http.StatusInternalServerError, err)
 				w.WriteHeader(http.StatusInternalServerError)
 				tx.Rollback()
 				db.Close()
@@ -115,7 +108,7 @@ func MultilineWincor(w http.ResponseWriter, r *http.Request) {
 			strings.Contains(element, "PLEASECONTACTBRANCH") {
 			_, err := tx.Exec("INSERT INTO `"+tbl_emergency_receipt+"`(`index`, `dbname`, `ip_address`, `ejlog`, `is_read`) VALUES (?, ?, ?, ?, ?)", tblej_id, tbl_name, ip_address, element, 0)
 			if err != nil {
-				ErrorLogger.Printf("RC : %d - Error Emergency: %s", http.StatusInternalServerError, err)
+				models.ErrorLogger.Printf("RC : %d - Error Emergency: %s", http.StatusInternalServerError, err)
 				w.WriteHeader(http.StatusInternalServerError)
 				tx.Rollback()
 				db.Close()
@@ -131,7 +124,7 @@ func MultilineWincor(w http.ResponseWriter, r *http.Request) {
 			strings.Contains(element, "REPLENISHMENT") {
 			_, err := tx.Exec("INSERT INTO `"+tbl_addcash+"`(`index`, `dbname`, `ip_address`, `ejlog`, `is_read`) VALUES (?, ?, ?, ?, ?)", tblej_id, tbl_name, ip_address, element, 0)
 			if err != nil {
-				ErrorLogger.Printf("RC : %d - Error Addcash: %s", http.StatusInternalServerError, err)
+				models.ErrorLogger.Printf("RC : %d - Error Addcash: %s", http.StatusInternalServerError, err)
 				w.WriteHeader(http.StatusInternalServerError)
 				tx.Rollback()
 				db.Close()
@@ -144,7 +137,7 @@ func MultilineWincor(w http.ResponseWriter, r *http.Request) {
 	// defer db.Close()
 
 	elapsed := time.Since(start)
-	InfoLogger.Printf("RC : %d - This request took %s ", http.StatusOK, elapsed)
+	models.InfoLogger.Printf("RC : %d - This request took %s ", http.StatusOK, elapsed)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -153,7 +146,7 @@ func checkTable(tbl_name, kanwil string) error {
 
 	db, err := config.DbConn(dbname)
 	if err != nil {
-		ErrorLogger.Printf("Error connection to db : %s", err)
+		models.ErrorLogger.Printf("Error connection to db : %s", err)
 		return err
 	}
 
@@ -175,7 +168,7 @@ func checkTable(tbl_name, kanwil string) error {
 	defer cancelfunc()
 	_, err2 := db.ExecContext(ctx, query)
 	if err2 != nil {
-		ErrorLogger.Printf("Error %s when creating ejlog table - ", err2)
+		models.ErrorLogger.Printf("Error %s when creating ejlog table - ", err2)
 		return err2
 	}
 	defer db.Close()
@@ -187,7 +180,7 @@ func checkIpValid(ip_address string) (string, error) {
 	var tid, ip_atm, _type, kanwil2 string
 	db, err := config.DbConn("ejlog3")
 	if err != nil {
-		ErrorLogger.Printf("Error connection to db : %s", err)
+		models.ErrorLogger.Printf("Error connection to db : %s", err)
 		return "", err
 	}
 	err2 := db.QueryRow("select tid, ip_address, type, kanwil2 from atm_mappings where ip_address = ? limit 1", ip_address).Scan(&tid, &ip_atm, &_type, &kanwil2)

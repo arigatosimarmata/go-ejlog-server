@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"ejol/ejlog-server/controller"
 	"fmt"
 	"os"
 )
@@ -36,7 +35,7 @@ func (atmModel AtmMappingCacheModel) GetData() ([]AtmMappingCache, error) {
 	rows, err := atmModel.DB.Query("select ip_address, kanwil2 from atm_mappings")
 	var i = 0
 	if err != nil {
-		controller.ErrorLogger.Println("Error query : ", err)
+		ErrorLogger.Println("Error query : ", err)
 		return nil, err
 	} else {
 		atms := []AtmMappingCache{}
@@ -45,10 +44,10 @@ func (atmModel AtmMappingCacheModel) GetData() ([]AtmMappingCache, error) {
 			i++
 			err2 := rows.Scan(&ipaddr, &kanwil2)
 			if err2 != nil {
-				controller.ErrorLogger.Println("Error looping data : ", err2)
+				ErrorLogger.Println("Error looping data : ", err2)
 				return nil, err2
 			} else {
-				controller.InfoLogger.Printf("Data %d - Ip Addr %s :  - Kanwil : %s", i, ipaddr, kanwil2)
+				InfoLogger.Printf("Data %d - Ip Addr %s :  - Kanwil : %s", i, ipaddr, kanwil2)
 				atm := AtmMappingCache{ipaddr, kanwil2}
 				atms = append(atms, atm)
 			}
@@ -127,7 +126,7 @@ func (atmModel AtmMappingCacheModel) Limit(offset, count int) ([]AtmMappingCache
 	rows, err := atmModel.DB.Query("select ip_address, kanwil2 from atm_mappings limit ?,?", offset, count)
 	var i = 0
 	if err != nil {
-		controller.ErrorLogger.Println("Error query : ", err)
+		ErrorLogger.Println("Error query : ", err)
 		return nil, err
 	} else {
 		atms := []AtmMappingCache{}
@@ -136,10 +135,10 @@ func (atmModel AtmMappingCacheModel) Limit(offset, count int) ([]AtmMappingCache
 			i++
 			err2 := rows.Scan(&ipaddr, &kanwil2)
 			if err2 != nil {
-				controller.ErrorLogger.Println("Error looping data : ", err2)
+				ErrorLogger.Println("Error looping data : ", err2)
 				return nil, err2
 			} else {
-				controller.InfoLogger.Printf("Data %d - Ip Addr %s :  - Kanwil : %s", i, ipaddr, kanwil2)
+				InfoLogger.Printf("Data %d - Ip Addr %s :  - Kanwil : %s", i, ipaddr, kanwil2)
 				atm := AtmMappingCache{ipaddr, kanwil2}
 				atms = append(atms, atm)
 			}
@@ -163,9 +162,9 @@ func (atmModel AtmMappingCacheModel) GetDataV2() ([]AtmMappingCache, error) {
 			err := atmModel.DB.QueryRow("select ip_address, kanwil2 from atm_mappings").Scan(&ipaddr, &kanwil2)
 			// err := atmModel.DB.QueryRow("select ip_address, kanwil2 from atm_mappings").Scan(&AtmMappingCache)
 			if err != nil {
-				controller.ErrorLogger.Printf("Error query %s : ", err)
+				ErrorLogger.Printf("Error query %s : ", err)
 			}
-			controller.InfoLogger.Printf("Ip Address : %s - Kanwil : %s", ipaddr, kanwil2)
+			InfoLogger.Printf("Ip Address : %s - Kanwil : %s", ipaddr, kanwil2)
 			resultChannel <- currentRecords
 		}(beginID, endId)
 		resultCount += 1

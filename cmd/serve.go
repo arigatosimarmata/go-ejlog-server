@@ -7,6 +7,7 @@ package cmd
 import (
 	"ejol/ejlog-server/controller"
 	"ejol/ejlog-server/job"
+	"ejol/ejlog-server/models"
 	"ejol/ejlog-server/utils"
 	"time"
 
@@ -24,7 +25,7 @@ var serveCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		err := godotenv.Load(".env")
 		if err != nil {
-			controller.ErrorLogger.Fatal("Error load file env : ", err)
+			models.ErrorLogger.Fatal("Error load file env : ", err)
 		}
 		utils.InitUtils()
 		go job.JobCacheAtmMappings()
