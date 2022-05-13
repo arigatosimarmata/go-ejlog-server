@@ -1,6 +1,6 @@
 # The builder go-image
 #FROM golang:1.14-alpine as builderimage
-FROM golang:1.17 as builderimage
+FROM golang:1.17-alpine as builderimage
 
 ENV http_proxy "http://172.18.104.20:1707"
 ENV https_proxy "http://172.18.104.20:1707"
@@ -21,8 +21,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 #RUN GOOS=linux GOARCH=amd64 go build -o main
 
 #FROM golang:1.14-alpine
-FROM golang:1.17
-#FROM alpine:latest
+#FROM golang:1.17
+FROM alpine:latest
 
 # Set Working Directory in new Image
 RUN mkdir /app && chmod -R 777 /app
@@ -30,7 +30,8 @@ WORKDIR /app
 
 # Get Executable Binary file to new Image
 #COPY --from=builderimage /app/bigetron /app/.env /app/bigetron.log ./
-COPY --from=builderimage /app/ejlog /app/.env /app/ejlog-server.log ./
+#COPY --from=builderimage /app/ejlog /app/.env /app/ejlog-server.log ./
+COPY --from=builderimage /app/ejlog ./
 
 # Expose port 3000 to the outside world
 EXPOSE 3000/tcp
