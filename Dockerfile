@@ -21,8 +21,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 #RUN GOOS=linux GOARCH=amd64 go build -o main
 
 #FROM golang:1.14-alpine
-FROM golang:1.17
-#FROM alpine:latest
+#FROM golang:1.17
+FROM alpine:latest
 
 # Set Working Directory in new Image
 RUN mkdir /app && chmod -R 777 /app
@@ -30,7 +30,7 @@ WORKDIR /app
 
 # Get Executable Binary file to new Image
 #COPY --from=builderimage /app/bigetron /app/.env /app/bigetron.log ./
-COPY --from=builderimage /app/ejol /app/ejlog-server.log ./
+COPY --from=builderimage /app/ejol /app/.env ./
 
 # Expose port 3000 to the outside world
 EXPOSE 3000/tcp
