@@ -17,7 +17,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/miguelmota/go-filecache"
 	"github.com/patrickmn/go-cache"
 )
 
@@ -627,60 +626,60 @@ func ConsumeFileEjol() error {
 }
 
 func ConsumeFileEjolSchedule() error {
-	date := time.Now().Format("20060102")
-	dirPath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + date + "/"
-	sectionDirs, err := ioutil.ReadDir(dirPath)
-	if err != nil {
-		log.Printf("Error Get Dir : %s", err)
-		return err
-	}
-	cache_directory := time.Now().Format("20060102") + "/"
-	var dst []byte
-	expire := 25 * time.Hour
+	// date := time.Now().Format("20060102")
+	// // dirPath := os.Getenv("EJOL_DIRECTORY_FILE") + "appendrow/" + date + "/"
+	// // // sectionDirs, err := ioutil.ReadDir(dirPath)
+	// // // if err != nil {
+	// // // 	log.Printf("Error Get Dir : %s", err)
+	// // // 	return err
+	// // // }
+	// // // cache_directory := time.Now().Format("20060102") + "/"
+	// // // var dst []byte
+	// // // expire := 25 * time.Hour
 
-	for _, files := range sectionDirs {
-		ip_address := strings.ReplaceAll(files.Name(), "_", ".")
-		ip_address = ip_address[3:]
-		// fmt.Println(ip_address)
-		getKanwil, found := Cac.Get(ip_address)
-		if !found {
-			models.ErrorLogger.Printf("RC : %d - Cache Ip : %s Not Found \n", http.StatusNotFound, ip_address)
-			continue
-		}
-		kanwil := getKanwil.(string)
+	// // // for _, files := range sectionDirs {
+	// // // 	ip_address := strings.ReplaceAll(files.Name(), "_", ".")
+	// // // 	ip_address = ip_address[3:]
+	// // // 	// fmt.Println(ip_address)
+	// // // 	getKanwil, found := Cac.Get(ip_address)
+	// // // 	if !found {
+	// // // 		models.ErrorLogger.Printf("RC : %d - Cache Ip : %s Not Found \n", http.StatusNotFound, ip_address)
+	// // // 		continue
+	// // // 	}
+	// // // 	kanwil := getKanwil.(string)
 
-		_, err = filecache.Get(cache_directory, strings.ReplaceAll(ip_address, ".", "_"), &dst)
-		if err != nil {
-			models.ErrorLogger.Printf("IP Not Found in cache %s - Error : %s \n", ip_address, err)
-			return err
-		}
-		cachevalue, _ := strconv.Atoi(string(dst))
+	// // // 	_, err = filecache.Get(cache_directory, strings.ReplaceAll(ip_address, ".", "_"), &dst)
+	// // // 	if err != nil {
+	// // // 		models.ErrorLogger.Printf("IP Not Found in cache %s - Error : %s \n", ip_address, err)
+	// // // 		return err
+	// // // 	}
+	// // // 	cachevalue, _ := strconv.Atoi(string(dst))
 
-		tblname := strings.ReplaceAll(ip_address, ".", "_")
-		fn := dirPath + "ej_" + tblname
+	// // // 	tblname := strings.ReplaceAll(ip_address, ".", "_")
+	// // // 	fn := dirPath + "ej_" + tblname
 
-		line, lastl, err := ReadLineStreamUntilFinish(fn, cachevalue, 0)
-		if err != nil {
-			models.ErrorLogger.Printf("Error %s \n", err)
-			return err
-		}
+	// // // 	line, lastl, err := ReadLineStreamUntilFinish(fn, cachevalue, 0)
+	// // // 	if err != nil {
+	// // // 		models.ErrorLogger.Printf("Error %s \n", err)
+	// // // 		return err
+	// // // 	}
 
-		err = processRequestEjlogSchedule(line, ip_address, kanwil)
-		if err != nil {
-			models.ErrorLogger.Printf("Error processRequestEjlog : %s \n", err)
-			return err
-		}
+	// // // 	err = processRequestEjlogSchedule(line, ip_address, kanwil)
+	// // // 	if err != nil {
+	// // // 		models.ErrorLogger.Printf("Error processRequestEjlog : %s \n", err)
+	// // // 		return err
+	// // // 	}
 
-		lastlinestring := strconv.Itoa(lastl + 1)
-		data_lastline := []byte(lastlinestring)
-		err_cache := filecache.Set(cache_directory, strings.ReplaceAll(ip_address, ".", "_"), data_lastline, expire)
-		if err_cache != nil {
-			models.InfoLogger.Printf("Failed to set new value cache for IP %s - Error : %s \n", ip_address, err)
-			return err
-		}
-		models.InfoLogger.Printf("Data Saved Successfully %s \n", dirPath+files.Name())
+	// // // 	lastlinestring := strconv.Itoa(lastl + 1)
+	// // // 	data_lastline := []byte(lastlinestring)
+	// // // 	err_cache := filecache.Set(cache_directory, strings.ReplaceAll(ip_address, ".", "_"), data_lastline, expire)
+	// // // 	if err_cache != nil {
+	// // // 		models.InfoLogger.Printf("Failed to set new value cache for IP %s - Error : %s \n", ip_address, err)
+	// // // 		return err
+	// // // 	}
+	// // // 	models.InfoLogger.Printf("Data Saved Successfully %s \n", dirPath+files.Name())
 
-	}
+	// // // }
 
 	return nil
 }

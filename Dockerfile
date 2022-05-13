@@ -18,6 +18,7 @@ COPY . .
 
 # Build Docker Image with CGO Enabled
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+#RUN GOOS=linux GOARCH=amd64 go build -o main
 
 #FROM golang:1.14-alpine
 FROM golang:1.17
@@ -31,11 +32,11 @@ WORKDIR /app
 #COPY --from=builderimage /app/bigetron /app/.env /app/bigetron.log ./
 COPY --from=builderimage /app/ejol /app/ejlog-server.log ./
 
-# Expose port 4040 to the outside world
+# Expose port 3000 to the outside world
 EXPOSE 3000/tcp
 
 ENV http_proxy ""
 ENV https_proxy ""
 
 # Run the server executable
-CMD [ "./main" ]
+CMD [ "./main serve" ]
