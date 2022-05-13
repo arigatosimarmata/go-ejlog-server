@@ -17,7 +17,7 @@ RUN go mod download
 COPY . .
 
 # Build Docker Image with CGO Enabled
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o go-ejlog-server .
 #RUN GOOS=linux GOARCH=amd64 go build -o main
 
 #FROM golang:1.14-alpine
@@ -40,4 +40,4 @@ ENV http_proxy ""
 ENV https_proxy ""
 
 # Run the server executable
-CMD [ "./main serve" ]
+CMD [ "./go-ejlog-server serve" ]
