@@ -20,10 +20,6 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           {{- if eq .Values.env "dev"}}
-          resources:
-            limits:
-              cpu: "200m"
-              memory: "500m"
           env:
             - name: HOST
               value: "{{ .Values.dev.host }}"
