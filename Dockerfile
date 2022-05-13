@@ -6,7 +6,7 @@ ENV http_proxy "http://172.18.104.20:1707"
 ENV https_proxy "http://172.18.104.20:1707"
 
 RUN mkdir /app && chmod -R 777 /app
-RUN touch /app/ejlog-server.log
+RUN touch /app/go-ejlog-server.log
 WORKDIR /app
 
 # Copy and Download all necessary module
@@ -31,7 +31,7 @@ WORKDIR /app
 # Get Executable Binary file to new Image
 #COPY --from=builderimage /app/bigetron /app/.env /app/bigetron.log ./
 #COPY --from=builderimage /app/ejlog /app/.env /app/ejlog-server.log ./
-COPY --from=builderimage /app/ejlog ./
+COPY --from=builderimage /app/go-ejlog-server ./
 
 # Expose port 3000 to the outside world
 EXPOSE 3000/tcp
