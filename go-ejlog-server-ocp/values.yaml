@@ -1,15 +1,49 @@
-name: "go-roumtatm-ocp"
+# Default values for go-ejlog-server-ocp.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+name: "go-ejlog-server-ocp"
 replicaCount: 1
 
 image:
-  repository: image-registry.openshift-image-registry.svc:5000/dcp/go-roumtatm-ocp
+  repository: image-registry.openshift-image-registry.svc:5000/dcp/go-ejlog-server-ocp
   pullPolicy: Always
   # Overrides the image tag whose default is the chart version.
   tag: "latest"
 
 imagePullSecrets: []
-port: 7710
-targetPort: 7710-tcp
+port: 3000
+targetPort: 3000-tcp
+
+env: dev
+
+dev:
+  host: ".apps.ocp-dev.bri.co.id" 
+
+  db_ejol: "ejlog3"
+  ip_db: "172.18.135.152"
+  userdb: "dba"
+  dbp: "P@ssw0rd"  
+  portdb: "3306" 
+  dbdriver: "mysql"
+  
+  #Server Address
+  server_address: "0.0.0.0"
+  server_port: "3000"
+  
+  # LOG FILE
+  log_level: "info"
+  log_out: "/var/log/go-ejlog-server/go-ejol-server.log"
+  #LOG_OUTPUT=""
+  max_size: "500"
+  max_backup: "5"
+  max_age: "90"
+      
+
+dc:
+  host: ".apps.ocp-dc.bri.co.id"
+
+dr:
+  host: ".apps.ocp-dr.bri.co.id"
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -34,23 +68,29 @@ securityContext: {}
   # runAsUser: 1000
 
 service:
-# type: ClusterIP
-  type: NodePort
-  port: 7710
-  nodeport: 31010
-  protocol : TCP
+  type: ClusterIP
+  port: 3000
+  weight: 100
 
-#hpa:
-#  enabled: true
-#  minReplicas: 1
-#  maxReplicas: 10
-#  averageUtilization: 80
-#  targetAverageUtilization: 80
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 10
+  averageUtilization: 70
+  targetAverageUtilization: 70
 
 ingress:
   enabled: false
   tls: false
   servicePort: http
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 200Mi
+  limits:
+    cpu: 250m
+    memory: 250Mi
 
 autoscaling:
   enabled: false
